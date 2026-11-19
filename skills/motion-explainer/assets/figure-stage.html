@@ -1,0 +1,73 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图文解说</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#252b28;color:#f7f5e8;font:16px system-ui}canvas{display:block;width:100vw;height:100vh;object-fit:contain}#controls{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;border:1px solid #657264;padding:4px 12px;background:#18211c;border-radius:20px}button{color:inherit;background:transparent;border:0;padding:4px;cursor:pointer}input{accent-color:#dfea96}output{font:12px monospace}.render #controls{display:none}
+</style><canvas id="stage" width="1920" height="1080" role="img"></canvas><audio id="audio"></audio>
+<div id="controls"><button id="play">播放</button><input id="scrub" aria-label="播放进度" type="range" min="0" step=".05"><output id="time"></output></div>
+<script>
+const film=/* FILM_DATA */ null;
+if(!film) throw Error('Build this template with compose_figures.py.');
+const $=id=>document.getElementById(id), canvas=$('stage'), g=canvas.getContext('2d');
+const isRender=new URLSearchParams(location.search).has('render');
+const reduced=!isRender && matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.documentElement.classList.toggle('render',isRender);
+document.title=film.title;canvas.setAttribute('aria-label',film.title);
+const images={};
+const decoded=Promise.all(Object.entries(film.figures).map(async([id,fig])=>{
+ const image=new Image();image.src=fig.src;await image.decode();images[id]=image;
+}));
+window.DURATION=film.duration;
+const aperture={x:100,y:246,w:1720,h:624};
+const clamp=x=>Math.max(0,Math.min(1,x));
+function ease(x){x=clamp(x);return reduced?Number(x>0):x*x*(3-2*x)}
+const mix=(a,b,k)=>a+(b-a)*k;
+function font(size,weight=500){return weight+' '+size+'px "PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif'}
+function text(value,x,y,size,weight,color,align='left',max=1720){
+ g.font=font(size,weight);g.fillStyle=color;g.textAlign=align;g.fillText(value,x,y,max);
+}
+function frame(image,box){
+ const [l,t,r,b]=box;
+ const s=Math.min(aperture.w/(image.width*(r-l)),aperture.h/(image.height*(b-t)));
+ const w=image.width*s,h=image.height*s;
+ return {x:aperture.x+aperture.w/2-(r+l)*w/2,y:aperture.y+aperture.h/2-(t+b)*h/2,w,h};
+}
+function rounded(x,y,w,h,r){g.beginPath();g.roundRect(x,y,w,h,r)}
+function draw(t){
+ const idx=film.shots.findLastIndex(s=>s.start<=t), shot=film.shots[idx], prev=film.shots[Math.max(0,idx-1)];
+ const im=images[shot.figure], same=prev.figure===shot.figure, u=ease((t-shot.start)/.72);
+ const a=frame(im,same?prev.view:shot.view), b=frame(im,shot.view);
+ const x=mix(a.x,b.x,u),y=mix(a.y,b.y,u),w=mix(a.w,b.w,u),h=mix(a.h,b.h,u);
+ const bg=g.createLinearGradient(0,0,1920,1080);bg.addColorStop(0,'#303932');bg.addColorStop(1,'#202724');g.fillStyle=bg;g.fillRect(0,0,1920,1080);
+ text(film.byline,100,77,30,650,'#e6edd4');text(film.title,1820,77,27,500,'#ced6c8','right',1050);
+ g.fillStyle='#667165';g.fillRect(100,104,1720,2);
+ text(shot.title,100,197,66,720,'#f8f5e9');
+ g.save();rounded(aperture.x,aperture.y,aperture.w,aperture.h,14);g.clip();
+ g.fillStyle='#28302c';g.fillRect(aperture.x,aperture.y,aperture.w,aperture.h);
+ // Keep neighboring UI outside the chosen source region out of a detail shot.
+ const oldBox=same?prev.view:shot.view, box=shot.view.map((v,i)=>mix(oldBox[i],v,u));
+ g.beginPath();g.rect(x+box[0]*w,y+box[1]*h,(box[2]-box[0])*w,(box[3]-box[1])*h);g.clip();
+ g.drawImage(im,x,y,w,h);
+ if(shot.mark){
+  const m=shot.mark,alpha=ease((t-shot.start-.12)/.4);g.globalAlpha=alpha;
+  const rx=x+m[0]*w,ry=y+m[1]*h,rw=(m[2]-m[0])*w,rh=(m[3]-m[1])*h;
+  rounded(rx,ry,rw,rh,6);g.fillStyle='rgba(245,193,62,.14)';g.fill();
+  g.lineWidth=5;g.strokeStyle='#a4641c';g.stroke();
+ }
+ g.restore();
+ text(film.figures[shot.figure].label,100,912,25,500,'#c0cbbb');
+ const cue=(film.captions || film.lines).find(c=>t>=c.start && t<=c.end+.06);
+ if(cue)text(cue.text,960,1005,44,600,'#fffef5','center');
+ g.fillStyle='#dce798';g.fillRect(0,1075,1920*t/film.duration,5);
+}
+const audio=$('audio'),scrub=$('scrub'),button=$('play');scrub.max=film.duration;
+if(film.audio && !isRender)audio.src=film.audio;
+const fmt=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
+let position=0,playing=false,origin=0,raf=0;
+function show(t){position=Math.max(0,Math.min(film.duration,t));draw(position);scrub.value=position;$('time').textContent=fmt(position)+' / '+fmt(film.duration)}
+window.seekTo=async function(seconds){await decoded;show(seconds)};
+function pause(){playing=false;audio.pause();cancelAnimationFrame(raf);button.textContent=position>=film.duration-.05?'重播':'播放'}
+function tick(){if(!playing)return;show(film.audio?audio.currentTime:(performance.now()-origin)/1000);if(position>=film.duration-.04||audio.ended){show(film.duration);pause()}else raf=requestAnimationFrame(tick)}
+button.onclick=async()=>{if(playing){pause();return}await decoded;if(position>=film.duration-.05)show(0);if(film.audio){audio.currentTime=position;await audio.play()}origin=performance.now()-position*1000;playing=true;button.textContent='暂停';tick()};
+scrub.oninput=async()=>{await decoded;const t=Number(scrub.value);if(film.audio)audio.currentTime=t;origin=performance.now()-t*1000;show(t)};
+window.seekTo(0);
+</script></html>
