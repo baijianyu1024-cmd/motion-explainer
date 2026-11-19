@@ -18,7 +18,7 @@ def srt_time(seconds):
 def main():
     parser = argparse.ArgumentParser(
         description="Combine recorded lines and pauses into narration.wav, timeline.json and subtitles.srt.",
-        epilog='JSON example: [{"text":"昨天，我说想喝无糖咖啡。","file":"line-01.wav","pause":0.4}]. '
+        epilog='JSON example: [{"text":"同一笔订单只算一次。","file":"line-01.wav","pause":0.4}]. '
                'File paths are relative to the JSON. Pause is silence after each line, in seconds.'
     )
     parser.add_argument("manifest", type=Path)

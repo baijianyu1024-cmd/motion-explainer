@@ -2,7 +2,13 @@
 
 一个把图文稿做成中文解说视频的 Codex Skill。给它一份 Word 文档、一段口述，或者一份 Codex 有权读取的在线文档。它会围绕你想讲清的观点写口播、编排镜头，并按实际旁白的时间生成字幕和 MP4。
 
-![拿铁订单示例的动态分镜](media/preview.gif)
+## 示例 · 静态与动态 Agent 如何生成 SQL？
+
+“6 月 1 日到 7 日，有多少订单退款成功？”静态方案调用预先写好提示词的退款分析助手，动态方案由主 Agent 根据本次问题和可用字段生成提示词。如果同一订单成功退款两次，两份提示词都要保留“只算一单”的口径。两条路径都可以直接生成 SQL。
+
+[![动画预览：预设 Prompt 与实时生成的 Prompt 怎样汇入 SQL 生成](media/agent-architecture.gif)](media/agent-architecture.mp4)
+
+[观看完整有声样片（MP4）](media/agent-architecture.mp4) · [下载可拖动的离线 HTML](https://raw.githubusercontent.com/baijianyu1024-cmd/motion-explainer/main/skills/motion-explainer/assets/example.html)
 
 ## 安装到 Codex
 
@@ -20,7 +26,7 @@
 
 > 用 $motion-explainer 把这篇做成两分钟的中文视频。听众懂 SQL，但第一次接触这两种架构。讲清两种方案分别在什么时候定义提示词。保留架构图，讲到哪个节点就放大哪个，用豆包配音。
 
-只有文档也可以开工。希望只读文字时，补一句“忽略原图，按正文画图解”。看到样片后，可以按时间提修改，比如“00:35 提前放大右侧的提示词，等观众读完再切”。成片可以搭配 SRT 字幕、独立旁白和能逐镜检查的离线 HTML。
+只有文档也可以开工。希望只读文字时，补一句“忽略原图，按正文画图解”。看到样片后，可以按时间提修改，比如“讲到按订单去重时，把两条退款记录放在一起，多停一秒”。成片可以搭配 SRT 字幕、独立旁白和能逐镜检查的离线 HTML。
 
 ## 需要准备什么
 
