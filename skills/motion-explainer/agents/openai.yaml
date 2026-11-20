@@ -1,4 +1,4 @@
 interface:
-  display_name: "动态解说工坊"
-  short_description: "把图文原稿里的观点、框架图和产品截图做成有中文旁白的解说视频"
-  default_prompt: "用 $motion-explainer 把这份图文文档做成中文解说视频，保留我强调的判断，按本次要求处理配图和配音。"
+  display_name: "视频后期制作"
+  short_description: "用豆包合成中文旁白，按实际发音对齐字幕，并将已有画面导出为 MP4"
+  default_prompt: "用 $motion-explainer 为这条视频生成豆包旁白、对齐字幕并导出 MP4。"

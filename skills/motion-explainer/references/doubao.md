@@ -4,7 +4,7 @@
 
 ## 合成一版旁白
 
-从本 Skill 目录运行，给每版配音准备一个工作目录。在工作目录写入 `cues.json`，一个元素对应一段镜头。例如 `[{"spoken":"六月十二日才首次推送。","caption":"6 月 12 日才首次推送。"}]`。字幕沿用正式名称，口播可按实际发音拼写。
+从本 Skill 目录运行，给每版配音准备一个工作目录。在工作目录写入 `cues.json`，每个元素是一段待对齐的口播。例如 `[{"spoken":"六月十二日才首次推送。","caption":"6 月 12 日才首次推送。"}]`。字幕沿用正式名称，口播可按实际发音拼写。
 
 ```sh
 episode=/path/to/work/this-voice-version
@@ -25,6 +25,6 @@ adapter="${DOUBAO_TTS_ADAPTER:-${CODEX_HOME:-$HOME/.codex}/skills/product-demo-v
 
 ## 对齐与出片
 
-合成产生 `doubao.mp3` 和 `doubao.mp3.doubao.json`。时间轴脚本用 `ffprobe` 读取时长，结合字词时间戳写出 `timeline.json` 与 `subtitles.srt`。镜头按 `lines` 定位，短字幕跟随 `captions`。若音频与元数据不匹配，或字词与口播匹配不足，请先核对版本，再决定是否重新合成。
+合成产生 `doubao.mp3` 和 `doubao.mp3.doubao.json`。时间轴脚本用 `ffprobe` 读取时长，结合字词时间戳写出 `timeline.json` 与 `subtitles.srt`。`lines` 保存各段口播的起止时间，`captions` 保存屏幕字幕的起止时间。若音频与元数据不匹配，或字词与口播匹配不足，请先核对版本，再决定是否重新合成。
 
-`scripts/compose_figures.py` 和 `scripts/export.mjs` 的 `--audio` 接受该 MP3。只改画面可复用音频与时间轴。口播修改后重新对齐，再回看下游镜头、字幕和章节的起点。
+口播修改后，使用对应版本的音轨与时间戳重新对齐。[视频导出](../SKILL.md#导出视频)可以直接使用合成的 MP3。
